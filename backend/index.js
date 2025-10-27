@@ -3,11 +3,13 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const userRoutes = require("./routes/userRoutes");
+const customerRoutes = require("./routes/customerRoutes");
 dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors());
 app.use("/api/user", userRoutes);
+app.use("/api/customer", customerRoutes);
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("Mongo Db Connected"))
