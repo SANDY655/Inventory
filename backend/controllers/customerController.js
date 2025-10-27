@@ -24,6 +24,7 @@ const getCustomers = async (req, res) => {
       limit = 10,
       search = "",
       googleReview,
+
       dataEntry,
       mobileGroup,
       chitInformed,
@@ -86,5 +87,110 @@ const getCustomers = async (req, res) => {
     });
   }
 };
+const updateCustomer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedCustomer = await Customer.findByIdAndUpdate(id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!updatedCustomer) {
+      return res.status(404).json({
+        message: "Data not found",
+        success: false,
+        error: true,
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Customer Updated Successfully",
+      data: updatedCustomer,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      error: true,
+    });
+  }
+};
+const getCustomerById = async (req, res) => {
+  try {
+    const customer = await Customer.findById(req.params.id);
+    if (!customer)
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found",
+      });
 
-module.exports = { createCustomer, getCustomers };
+    res.status(200).json({
+      success: true,
+      data: customer,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      error: true,
+    });
+  }
+};
+const deleteCustomer = async (req, res) => {
+  try {
+    const customer = await Customer.findByIdAndDelete(req.params.id);
+    if (!customer)
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found",
+        error: true,
+      });
+
+    return res.status(200).json({
+      success: true,
+      message: "Customer deleted Successfully",
+      error: false,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+      success: false,
+      error: true,
+    });
+  }
+};
+const checkExistingCustomer = async (req, res) => {
+  try {
+    const { customerName, WhatsAppNo } = req.query;
+    const query = {};
+    if (customerName)
+      query.customerName = { $regex: new RegExp(`^${customerName}$`, "i") };
+    if (WhatsAppNo) query.WhatsAppNo = WhatsAppNo;
+    const customer = await Customer.findOne(query);
+    if (!customer) {
+      return res.status(200).json({
+        success: true,
+        message: "No existing Record",
+        data: null,
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Customer found",
+      data: customer,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+module.exports = {
+  createCustomer,
+  getCustomers,
+  checkExistingCustomer,
+  updateCustomer,
+  deleteCustomer,
+  getCustomerById,
+};
