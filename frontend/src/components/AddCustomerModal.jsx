@@ -35,39 +35,69 @@ export default function AddCustomerModal({ onClose, fetchCustomers }) {
 
   const today = new Date().toISOString().split("T")[0];
 
+  useEffect(() => {
+    const fetchExistingCustomer = async () => {
+      const { customerName, WhatsAppNo } = formData;
+      if (customerName && WhatsAppNo.length >= 5) {
+        try {
+          const res = await fetch(
+            `${URL}/api/customer/check?customerName=${encodeURIComponent(
+              customerName
+            )}&WhatsAppNo=${encodeURIComponent(WhatsAppNo)}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          const data = await res.json();
+
+          if (res.ok && data?.data) {
+            setFormData((prev) => ({
+              ...prev,
+              ...data.data,
+              socialMediaFollowing: data.data.socialMediaFollowing || {
+                instagram: false,
+                facebook: false,
+                youTube: false,
+              },
+            }));
+            toast.info("Existing customer details loaded!");
+          }
+        } catch (error) {
+          console.error("Error fetching customer:", error);
+        }
+      }
+    };
+
+    const timeout = setTimeout(fetchExistingCustomer, 800); // ⏳ debounce a bit
+    return () => clearTimeout(timeout);
+  }, [formData.customerName, formData.WhatsAppNo]);
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const toggleSocialMedia = (platform) => {
-    setFormData((prev) => ({
-      ...prev,
-      socialMediaFollowing: {
-        ...prev.socialMediaFollowing,
-        [platform]: !prev.socialMediaFollowing[platform],
-      },
-    }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const res = await fetch(`${URL}/api/customer/create`, {
-        method: "POST",
-        headers: {
-          "Content-type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
-      if (res.ok) {
-        toast.success("Customer Added Successfully");
-        fetchCustomers();
+    if (formData.customerName && formData.WhatsAppNo) {
+      const { _id, __v, createdAt, updatedAt, SNO, ...filteredData } = formData;
+
+      try {
+        const res = await fetch(`${URL}/api/customer/create`, {
+          method: "POST",
+          headers: {
+            "Content-type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(filteredData),
+        });
+        if (res.ok) {
+          toast.success("Customer Added Successfully");
+          fetchCustomers();
+        }
+      } catch (error) {
+        toast.error("Failed to Add Customer");
       }
-    } catch (error) {
-      toast.error("Failed to Add Customer");
-    }
+    } else toast.error("Please fill Customer Name and WhatsApp Number");
     onClose();
   };
 
@@ -322,7 +352,7 @@ export default function AddCustomerModal({ onClose, fetchCustomers }) {
               type="submit"
               className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white transition"
             >
-              Save
+              Add
             </button>
           </div>
         </form>
