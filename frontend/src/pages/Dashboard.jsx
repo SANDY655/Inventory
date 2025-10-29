@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import CustomerModal from "../components/CustomerModal"; // adjust path if needed
 import EditCustomerModal from "../components/EditCustomerModal";
+import AddCustomerModal from "../components/AddCustomerModal";
 
 const URL = import.meta.env.VITE_BACKEND_URL;
 const token = localStorage.getItem("token");
@@ -20,6 +21,7 @@ export default function Dashboard() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState(null);
   const [editCustomer, setEditCustomer] = useState(null);
+  const [showModal, setShowModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [filters, setFilters] = useState({
     search: "",
@@ -298,7 +300,7 @@ export default function Dashboard() {
 
       {/* Floating Add Button */}
       <button
-        onClick={() => navigate("/add-customer")}
+        onClick={() => setShowModal(true)}
         className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition"
         title="Add New Customer"
       >
@@ -315,6 +317,12 @@ export default function Dashboard() {
         fetchCustomers={fetchCustomers}
         onClose={() => setEditCustomer(null)}
       />
+      {showModal && (
+        <AddCustomerModal
+          onClose={() => setShowModal(false)}
+          fetchCustomers={fetchCustomers}
+        />
+      )}
       {showDeleteModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-white rounded-xl p-6 shadow-2xl w-[90%] sm:w-[400px]">

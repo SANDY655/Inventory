@@ -80,9 +80,7 @@ export default function CustomerModal({ customer, onClose }) {
                   {formatKey(key)}:
                 </p>
                 <div className="text-gray-600 dark:text-gray-400 text-right">
-                  {value === null || value === undefined || value === ""
-                    ? "N/A"
-                    : renderValue(key, value)}
+                  {renderValue(key, value)}
                 </div>
               </div>
             ))}
