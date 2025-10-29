@@ -5,10 +5,12 @@ import {
   FaTrashAlt,
   FaTrash,
   FaRegTrashAlt,
+  FaEdit,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import CustomerModal from "../components/CustomerModal"; // adjust path if needed
+import EditCustomerModal from "../components/EditCustomerModal";
 
 const URL = import.meta.env.VITE_BACKEND_URL;
 const token = localStorage.getItem("token");
@@ -17,7 +19,7 @@ export default function Dashboard() {
   const [customers, setCustomers] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState(null);
-
+  const [editCustomer, setEditCustomer] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [filters, setFilters] = useState({
     search: "",
@@ -178,22 +180,35 @@ export default function Dashboard() {
               onClick={() => setSelectedCustomer(c)}
               className="relative group bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-md p-6 border border-gray-200 hover:shadow-2xl hover:-translate-y-1 hover:border-blue-300 transition-all duration-300 cursor-pointer"
             >
-              {/* Delete button */}
-              <button
-                className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition"
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent opening the customer modal
-                  setCustomerToDelete(c);
-                  setShowDeleteModal(true);
-                }}
-              >
-                <FaRegTrashAlt size={18} />
-              </button>
+              {/* Header row with name + buttons */}
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-xl font-semibold text-gray-800 group-hover:text-blue-600 transition">
+                  {c.customerName || "Unnamed Customer"}
+                </h2>
 
-              {/* Customer Name */}
-              <h2 className="text-xl font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition">
-                {c.customerName || "Unnamed Customer"}
-              </h2>
+                <div className="flex items-center gap-3">
+                  <button
+                    className="text-gray-400 hover:text-yellow-700 transition"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditCustomer(c);
+                    }}
+                  >
+                    <FaEdit size={18} />
+                  </button>
+
+                  <button
+                    className="text-gray-400 hover:text-red-500 transition"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCustomerToDelete(c);
+                      setShowDeleteModal(true);
+                    }}
+                  >
+                    <FaRegTrashAlt size={18} />
+                  </button>
+                </div>
+              </div>
 
               {/* Info */}
               <div className="space-y-1 text-sm text-gray-600">
@@ -294,6 +309,11 @@ export default function Dashboard() {
       <CustomerModal
         customer={selectedCustomer}
         onClose={() => setSelectedCustomer(null)}
+      />
+      <EditCustomerModal
+        customer={editCustomer}
+        fetchCustomers={fetchCustomers}
+        onClose={() => setEditCustomer(null)}
       />
       {showDeleteModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
