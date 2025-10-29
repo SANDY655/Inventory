@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { FaSearch, FaPlus } from "react-icons/fa";
+import {
+  FaSearch,
+  FaPlus,
+  FaTrashAlt,
+  FaTrash,
+  FaRegTrashAlt,
+} from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import CustomerModal from "../components/CustomerModal"; // adjust path if needed
@@ -9,6 +15,9 @@ const token = localStorage.getItem("token");
 
 export default function Dashboard() {
   const [customers, setCustomers] = useState([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState(null);
+
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [filters, setFilters] = useState({
     search: "",
@@ -50,6 +59,24 @@ export default function Dashboard() {
       }
     } catch (err) {
       toast.error("Server error");
+    }
+  };
+  const handleDelete = async (id) => {
+    try {
+      const res = await fetch(`${URL}/api/customer/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.ok) toast.success("Deleted Successfully");
+      fetchCustomers();
+      setShowDeleteModal(false);
+      setCustomerToDelete(null);
+    } catch (error) {
+      toast.error("Failed to Delete");
+      console.log(error);
     }
   };
 
@@ -144,78 +171,92 @@ export default function Dashboard() {
       {customers.length === 0 ? (
         <p className="text-gray-600 text-center text-lg">No customers found.</p>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {" "}
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {customers.map((c) => (
             <div
-              onClick={() => setSelectedCustomer(c)}  
               key={c._id}
-              className="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-xl hover:border-blue-200 transition"
+              onClick={() => setSelectedCustomer(c)}
+              className="relative group bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-md p-6 border border-gray-200 hover:shadow-2xl hover:-translate-y-1 hover:border-blue-300 transition-all duration-300 cursor-pointer"
             >
-              {" "}
-              <h2 className="text-xl font-semibold text-gray-800 mb-1">
-                {" "}
-                {c.customerName}{" "}
-              </h2>{" "}
-              <p className="text-gray-600 text-sm mb-1">
-                {" "}
-                Reference:{" "}
-                <span className="font-medium">{c.reference || "N/A"}</span>{" "}
-              </p>{" "}
-              <p className="text-gray-600 text-sm mb-1">
-                {" "}
-                WhatsApp:{" "}
-                <span className="font-medium">
-                  {c.WhatsAppNo || "N/A"}
-                </span>{" "}
-              </p>{" "}
-              <p className="text-gray-600 text-sm mb-2">
-                {" "}
-                Checked By:{" "}
-                <span className="font-medium">{c.checkedBy || "N/A"}</span>{" "}
-              </p>{" "}
-              <p className="text-gray-500 text-sm mb-3">
-                {" "}
-                Date:{" "}
-                {c.date
-                  ? (() => {
-                      const d = new Date(c.date);
-                      const day = String(d.getDate()).padStart(2, "0");
-                      const month = String(d.getMonth() + 1).padStart(2, "0");
-                      const year = d.getFullYear();
-                      return `${day}/${month}/${year}`;
-                    })()
-                  : "N/A"}{" "}
-              </p>{" "}
-              <div className="flex flex-wrap gap-2 text-xs mt-2">
-                {" "}
+              {/* Delete button */}
+              <button
+                className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent opening the customer modal
+                  setCustomerToDelete(c);
+                  setShowDeleteModal(true);
+                }}
+              >
+                <FaRegTrashAlt size={18} />
+              </button>
+
+              {/* Customer Name */}
+              <h2 className="text-xl font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition">
+                {c.customerName || "Unnamed Customer"}
+              </h2>
+
+              {/* Info */}
+              <div className="space-y-1 text-sm text-gray-600">
+                <p>
+                  Reference:{" "}
+                  <span className="font-medium text-gray-800">
+                    {c.reference || "N/A"}
+                  </span>
+                </p>
+                <p>
+                  WhatsApp:{" "}
+                  <span className="font-medium text-gray-800">
+                    {c.WhatsAppNo || "N/A"}
+                  </span>
+                </p>
+                <p>
+                  Checked By:{" "}
+                  <span className="font-medium text-gray-800">
+                    {c.checkedBy || "N/A"}
+                  </span>
+                </p>
+                <p className="text-gray-500">
+                  Date:{" "}
+                  {c.date
+                    ? (() => {
+                        const d = new Date(c.date);
+                        return `${String(d.getDate()).padStart(
+                          2,
+                          "0"
+                        )}/${String(d.getMonth() + 1).padStart(
+                          2,
+                          "0"
+                        )}/${d.getFullYear()}`;
+                      })()
+                    : "N/A"}
+                </p>
+              </div>
+
+              {/* Badges */}
+              <div className="flex flex-wrap gap-2 mt-4">
                 {c.googleReview && (
-                  <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full font-medium">
-                    {" "}
-                    Review: {c.googleReview}{" "}
+                  <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 font-medium">
+                    Review: {c.googleReview}
                   </span>
-                )}{" "}
+                )}
                 {c.dataEntry && (
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
-                    {" "}
-                    Entry: {c.dataEntry}{" "}
+                  <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700 font-medium">
+                    Entry: {c.dataEntry}
                   </span>
-                )}{" "}
+                )}
                 {c.chitInformed && (
-                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full font-medium">
-                    {" "}
-                    Informed: {c.chitInformed}{" "}
+                  <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 font-medium">
+                    Informed: {c.chitInformed}
                   </span>
-                )}{" "}
+                )}
                 {c.chitJoining && (
-                  <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full font-medium">
-                    {" "}
-                    Joining: {c.chitJoining}{" "}
+                  <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800 font-medium">
+                    Joining: {c.chitJoining}
                   </span>
-                )}{" "}
-              </div>{" "}
+                )}
+              </div>
             </div>
-          ))}{" "}
+          ))}
         </div>
       )}
 
@@ -254,6 +295,36 @@ export default function Dashboard() {
         customer={selectedCustomer}
         onClose={() => setSelectedCustomer(null)}
       />
+      {showDeleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white rounded-xl p-6 shadow-2xl w-[90%] sm:w-[400px]">
+            <h2 className="text-lg font-semibold text-gray-800 mb-3">
+              Confirm Deletion
+            </h2>
+            <p className="text-gray-600 text-sm mb-6">
+              Are you sure you want to delete{" "}
+              <span className="font-medium text-gray-900">
+                {customerToDelete?.customerName || "this customer"}
+              </span>
+              ? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 text-sm bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(customerToDelete?._id)}
+                className="px-4 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
